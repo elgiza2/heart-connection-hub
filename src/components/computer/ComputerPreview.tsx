@@ -29,7 +29,7 @@ export function ComputerPreview({
 }) {
   const { run, events, stop } = useLongRun(runId);
   const [control, setControl] = useState(false);
-  const [openSteps, setOpenSteps] = useState(false);
+  const [openSteps, setOpenSteps] = useState(true);
   const [full, setFull] = useState(false);
   const [summary, setSummary] = useState<string | null>(null);
   const summarizedRef = useRef(false);
