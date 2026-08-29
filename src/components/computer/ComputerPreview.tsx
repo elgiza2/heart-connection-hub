@@ -137,7 +137,7 @@ export function ComputerPreview({
         }
       >
         <div className="flex items-center gap-2 px-3 py-2 text-[12px]">
-          <span className="font-medium">حاسوب ميغسي</span>
+          <span className="font-medium">Megsy Computer</span>
           <span className="text-muted-foreground">{formatElapsed(run?.created_at)}</span>
           {!active && (
             <span
@@ -160,12 +160,12 @@ export function ComputerPreview({
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {control ? "عرض فقط" : "السيطرة"}
+                {control ? "View only" : "Take control"}
               </button>
               <button
                 type="button"
                 onClick={() => setFull((v) => !v)}
-                aria-label={full ? "تصغير" : "ملء الشاشة"}
+                aria-label={full ? "Exit full screen" : "Full screen"}
                 className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
               >
                 {full ? (
@@ -179,7 +179,7 @@ export function ComputerPreview({
                 onClick={() => void stop()}
                 className="rounded-full px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
               >
-                إيقاف
+                Stop
               </button>
             </>
           )}
@@ -203,13 +203,13 @@ export function ComputerPreview({
             ) : lastShot ? (
               <img
                 src={lastShot}
-                alt="آخر لقطة من شاشة الكمبيوتر"
+                alt="Last computer screenshot"
                 loading="lazy"
                 className="absolute inset-0 h-full w-full object-cover object-top"
               />
             ) : (
               <div className="absolute inset-0 grid place-items-center px-6 text-center text-[12px] text-white/60">
-                {run?.error || "بيجهّز الشاشة…"}
+                {run?.error || "Preparing the screen…"}
               </div>
             )}
             {!control && url && <div className="absolute inset-0" aria-hidden />}
@@ -233,7 +233,7 @@ export function ComputerPreview({
               type="button"
               onClick={() => setOpenSteps((v) => !v)}
               aria-expanded={openSteps}
-              aria-label="خطوات التنفيذ"
+              aria-label="Steps"
               className="ms-auto grid h-6 w-6 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
             >
               <ChevronDown
@@ -268,7 +268,7 @@ export function ComputerPreview({
                 rel="noreferrer"
                 className="rounded-full bg-foreground/[0.06] px-3 py-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
               >
-                {f.name || "ملف"}
+                {f.name || "File"}
               </a>
             ))}
           </div>
@@ -288,7 +288,7 @@ export function ComputerPreview({
           onClick={onClose}
           className="self-start text-[11px] text-muted-foreground transition-colors hover:text-foreground"
         >
-          إغلاق
+          Close
         </button>
       )}
     </div>
