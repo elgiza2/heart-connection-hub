@@ -1465,6 +1465,10 @@ const ChatPage = () => {
   };
 
   const isSubmittingRef = useRef(false);
+  // Timestamp of the current send lock. If any branch forgets to release the
+  // lock (thrown error, early return), the composer used to stay frozen until
+  // a reload — the "send button hangs" bug. A stale lock is now ignored.
+  const submitLockAtRef = useRef(0);
   const sendWithTextRef = useRef<((overrideText?: string) => Promise<void>) | undefined>(undefined);
 
   const ownInsertedIdsRef = useRef<Set<string>>(new Set());
