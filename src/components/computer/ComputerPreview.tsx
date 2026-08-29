@@ -102,6 +102,19 @@ export function ComputerPreview({
     ? events.map((e) => (e.detail ? `${e.title} — ${e.detail}` : e.title))
     : (plan ?? []);
 
+  // Last screenshot captured by the agent — keeps the card meaningful after
+  // the live view is torn down instead of collapsing it to a single line.
+  const lastShot = useMemo(() => {
+    for (let i = events.length - 1; i >= 0; i -= 1) {
+      if (events[i]?.screenshot_url) return events[i].screenshot_url as string;
+    }
+    return null;
+  }, [events]);
+
+  const resultFiles: { name?: string; url: string }[] = Array.isArray(run?.result?.files)
+    ? (run!.result.files as { name?: string; url: string }[]).filter((f) => f && f.url)
+    : [];
+
   return (
     <div className="flex flex-col gap-3">
       {/* 0 — plan, before any step arrives */}
@@ -115,38 +128,52 @@ export function ComputerPreview({
         </div>
       )}
 
-      {/* 1 — live screen */}
-      {!finished && (
-        <div
-          className={
-            full
-              ? "fixed inset-0 z-50 flex flex-col bg-background"
-              : "overflow-hidden rounded-2xl border border-border/50 bg-card/40"
-          }
-        >
-          <div className="flex items-center gap-2 px-3 py-2 text-[12px]">
-            <span className="font-medium">حاسوب ميغسي</span>
-            <span className="text-muted-foreground">{formatElapsed(run?.created_at)}</span>
-            <button
-              type="button"
-              onClick={() => setControl((v) => !v)}
-              className={`ms-auto rounded-full px-2.5 py-1 text-[11px] transition-colors ${
-                control
-                  ? "bg-[var(--megsy-blue,#3b82f6)]/15 text-[var(--megsy-blue,#3b82f6)]"
-                  : "text-muted-foreground hover:text-foreground"
+      {/* 1 — computer card: live while running, kept (with the final frame) after */}
+      <div
+        className={
+          full && !finished
+            ? "fixed inset-0 z-50 flex flex-col bg-background"
+            : "overflow-hidden rounded-2xl border border-border/50 bg-card/40"
+        }
+      >
+        <div className="flex items-center gap-2 px-3 py-2 text-[12px]">
+          <span className="font-medium">حاسوب ميغسي</span>
+          <span className="text-muted-foreground">{formatElapsed(run?.created_at)}</span>
+          {!active && (
+            <span
+              className={`inline-flex items-center gap-1 ${
+                failed ? "text-destructive" : "text-emerald-500"
               }`}
             >
-              {control ? "عرض فقط" : "السيطرة"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setFull((v) => !v)}
-              aria-label={full ? "تصغير" : "ملء الشاشة"}
-              className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {full ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-            </button>
-            {active && (
+              {!failed && <Check className="h-3.5 w-3.5" />}
+              {headline}
+            </span>
+          )}
+          {active && (
+            <>
+              <button
+                type="button"
+                onClick={() => setControl((v) => !v)}
+                className={`ms-auto rounded-full px-2.5 py-1 text-[11px] transition-colors ${
+                  control
+                    ? "bg-[var(--megsy-blue,#3b82f6)]/15 text-[var(--megsy-blue,#3b82f6)]"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {control ? "عرض فقط" : "السيطرة"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFull((v) => !v)}
+                aria-label={full ? "تصغير" : "ملء الشاشة"}
+                className="grid h-6 w-6 place-items-center rounded-full text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {full ? (
+                  <Minimize2 className="h-3.5 w-3.5" />
+                ) : (
+                  <Maximize2 className="h-3.5 w-3.5" />
+                )}
+              </button>
               <button
                 type="button"
                 onClick={() => void stop()}
@@ -154,9 +181,16 @@ export function ComputerPreview({
               >
                 إيقاف
               </button>
-            )}
-          </div>
-          <div className={`relative w-full bg-black/80 ${full ? "flex-1" : "aspect-[16/10]"}`}>
+            </>
+          )}
+        </div>
+
+        {(!finished || lastShot) && (
+          <div
+            className={`relative w-full bg-black/80 ${
+              full && !finished ? "flex-1" : "aspect-[16/10]"
+            }`}
+          >
             {url ? (
               <iframe
                 key={url}
@@ -166,6 +200,13 @@ export function ComputerPreview({
                 allow="clipboard-read; clipboard-write"
                 sandbox="allow-scripts allow-same-origin allow-forms"
               />
+            ) : lastShot ? (
+              <img
+                src={lastShot}
+                alt="آخر لقطة من شاشة الكمبيوتر"
+                loading="lazy"
+                className="absolute inset-0 h-full w-full object-cover object-top"
+              />
             ) : (
               <div className="absolute inset-0 grid place-items-center px-6 text-center text-[12px] text-white/60">
                 {run?.error || "بيجهّز الشاشة…"}
@@ -173,39 +214,18 @@ export function ComputerPreview({
             )}
             {!control && url && <div className="absolute inset-0" aria-hidden />}
           </div>
-          {/* current step, right under the screen */}
-          {active && (
-            <div className="flex items-center gap-2 px-3 py-2 text-[12px] text-muted-foreground">
-              <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--megsy-blue,#3b82f6)]" />
-              <span className="truncate">{headline}</span>
-              {events.length > 0 && (
-                <span className="ms-auto shrink-0 tabular-nums opacity-60">
-                  {events.length}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+        )}
 
-      {/* 2 — steps / thinking */}
-      <div>
-        <div className="flex items-center gap-2 py-0.5">
+        {/* current step / final headline, inside the card */}
+        <div className="flex items-center gap-2 px-3 py-2 text-[12px] text-muted-foreground">
           {active ? (
-            <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--megsy-blue,#3b82f6)]" />
-          ) : run?.status === "done" ? (
-            <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+            <span className="h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-[var(--megsy-blue,#3b82f6)]" />
+          ) : failed ? (
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
           ) : (
-            <span className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/40" />
+            <Check className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
           )}
-          <span
-            className={`truncate text-[13px] ${
-              active
-                ? "ai-shimmer font-medium motion-reduce:animate-none"
-                : "text-muted-foreground"
-            }`}
-            aria-live="polite"
-          >
+          <span className={`truncate ${active ? "ai-shimmer motion-reduce:animate-none" : ""}`} aria-live="polite">
             {headline}
           </span>
           {traceLines.length > 0 && (
@@ -224,7 +244,7 @@ export function ComputerPreview({
         </div>
 
         {openSteps && traceLines.length > 0 && (
-          <div className="mt-1.5 max-h-72 overflow-y-auto">
+          <div className="max-h-72 overflow-y-auto px-3 pb-3">
             <div className="flex flex-col gap-2 border-s border-border/40 ps-3">
               {traceLines.map((line, i) => (
                 <div
@@ -237,9 +257,25 @@ export function ComputerPreview({
             </div>
           </div>
         )}
+
+        {resultFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-3 pb-3">
+            {resultFiles.map((f) => (
+              <a
+                key={f.url}
+                href={f.url}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full bg-foreground/[0.06] px-3 py-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {f.name || "ملف"}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* 3 — final answer, plain text outside any card */}
+      {/* 2 — final answer, plain text outside the card */}
       {finished && finalText && (
         <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
           {finalText}

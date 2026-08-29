@@ -79,9 +79,28 @@ export default function MobilePushShell({
     return () => window.removeEventListener("resize", compute);
   }, []);
 
-  // Opening the sidebar is intentionally button-only. A former global pointer
-  // capture listener used for edge swipes could cancel the browser's click
-  // synthesis on touch devices, making controls require a second tap.
+  // Edge swipe to open. Listeners are passive (no preventDefault), so tap /
+  // click synthesis on touch devices is never cancelled — the reason the old
+  // pointer-capture implementation was removed.
+  const touchRef = useRef<{ x: number; y: number; edge: boolean } | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (open) return;
+    const t = e.touches[0];
+    if (!t) return;
+    const fromLeading = isRtlUi ? window.innerWidth - t.clientX : t.clientX;
+    touchRef.current = { x: t.clientX, y: t.clientY, edge: fromLeading <= 28 };
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const start = touchRef.current;
+    touchRef.current = null;
+    if (!start || !start.edge || open) return;
+    const t = e.changedTouches[0];
+    if (!t) return;
+    const dx = t.clientX - start.x;
+    const dy = Math.abs(t.clientY - start.y);
+    const openDx = isRtlUi ? -dx : dx;
+    if (openDx > 56 && dy < 44) onOpenChange(true);
+  };
 
   const handleDragEnd = (_: unknown, info: PanInfo) => {
     if (!open) return;
@@ -125,7 +144,12 @@ export default function MobilePushShell({
         dragElastic={isRtlUi ? { left: 0.03, right: 0.14 } : { left: 0.14, right: 0.03 }}
         dragMomentum={false}
         onDragEnd={handleDragEnd}
-        className="relative min-h-[100dvh] overflow-visible max-md:z-[2] max-md:bg-background md:!transform-none"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={() => {
+          touchRef.current = null;
+        }}
+        className="relative min-h-[100dvh] overflow-visible max-md:z-[2] max-md:overflow-x-clip max-md:overscroll-x-none max-md:bg-background md:!transform-none"
       >
         {children}
 

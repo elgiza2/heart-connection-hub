@@ -1465,6 +1465,10 @@ const ChatPage = () => {
   };
 
   const isSubmittingRef = useRef(false);
+  // Timestamp of the current send lock. If any branch forgets to release the
+  // lock (thrown error, early return), the composer used to stay frozen until
+  // a reload — the "send button hangs" bug. A stale lock is now ignored.
+  const submitLockAtRef = useRef(0);
   const sendWithTextRef = useRef<((overrideText?: string) => Promise<void>) | undefined>(undefined);
 
   const ownInsertedIdsRef = useRef<Set<string>>(new Set());
@@ -1479,13 +1483,29 @@ const ChatPage = () => {
 
 
   const handleSendWithText = async (overrideText?: string) => {
+    try {
+      await handleSendWithTextInner(overrideText);
+    } catch (err) {
+      // Any unhandled failure must still release the composer.
+      isSubmittingRef.current = false;
+      console.error("[send] unhandled error", err);
+      toast.error("حصلت مشكلة أثناء الإرسال. جرّب تاني.");
+    }
+  };
+
+  const handleSendWithTextInner = async (overrideText?: string) => {
     const text = overrideText || input;
     const isLearningAnswer =
       chatMode === "learning" &&
       (text.trim().startsWith("[LEARN_ANSWER]") || text.trim().startsWith("[LEARN_CHOICE]"));
     const hasFrames = chatMode === "video" && videoStartEndMode && !!startFrameUrl && !!endFrameUrl;
     if (!text.trim() && attachedFiles.length === 0 && !hasFrames) return;
-    if (isLoading || isSubmittingRef.current) return;
+    if (isLoading) return;
+    if (isSubmittingRef.current) {
+      // Release locks older than a minute instead of blocking forever.
+      if (Date.now() - submitLockAtRef.current < 60_000) return;
+      isSubmittingRef.current = false;
+    }
     // Streak/achievement bookkeeping is telemetry, not part of the send path.
     // It used to be `await`ed here, which meant the user's own bubble could not
     // render until two lazy chunks finished downloading — the single biggest
@@ -1691,6 +1711,7 @@ const ChatPage = () => {
     }
 
     isSubmittingRef.current = true;
+    submitLockAtRef.current = Date.now();
 
     const pendingAttachments = attachedFiles.filter(
       (f) => f.data.startsWith("__parsing_") || f.data.startsWith("__uploading_"),

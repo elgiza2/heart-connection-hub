@@ -14,6 +14,8 @@ const STRONG_EN = [
   /\b(build|create|generate)\b.*\b(project|repo|app|website|dashboard)\b.*\b(files?|zip|folder)\b/i,
   /\b(automate|automation)\b/i,
   /\bcomputer (use|task)\b/i,
+  /\b(open|go to|visit|search (on|in|with))\b[^.\n]{0,20}\b(google|youtube|facebook|twitter|x\.com|gmail|amazon|linkedin|instagram|maps)\b/i,
+  /\b(take|grab|capture)\b[^.\n]{0,20}\bscreenshots?\b/i,
 ];
 
 const STRONG_AR = [
@@ -26,6 +28,12 @@ const STRONG_AR = [
   /(احجز|اشتري|اطلب|املا|امﻻ)\s+/,
   /(ابحث|دور)\s+.*(الانترنت|موقع|جوجل)/,
   /اتمت|اوتوميشن/,
+  // "افتح جوجل" / "ادخل يوتيوب" — a named site is enough, no need for the
+  // literal word "موقع".
+  /(افتح|ادخل|روح|زور|شغل|دور\s*في|ابحث\s*في|ابحث\s*علي|ابحث\s*على)\s*(لي|لى)?\s*(علي|على|في|ع|ب)?\s*(جوجل|جوجل\s*كروم|google|يوتيوب|youtube|فيسبوك|فيس\s*بوك|facebook|تويتر|twitter|انستجرام|انستقرام|instagram|واتساب|whatsapp|جيميل|gmail|خرائط|maps|امازون|amazon|نون|علي\s*اكسبريس|aliexpress|لينكد\s*ان|linkedin|شات\s*جي\s*بي\s*تي|chatgpt)/i,
+  // "ابحث عن كذا على النت / جوجل / اونلاين"
+  /(ابحث|دور|شوف|هات|جيب)\s+.*(جوجل|google|الانترنت|النت|اونلاين|online|يوتيوب|youtube|موقع)/i,
+  /(سكرين\s*شوت|screenshot|لقطه\s*شاشه|صوره\s*للشاشه)/i,
   /(https?:\/\/|www\.)/i,
   /(سجل|سجلي|سجل\s*لي|ادخل|دخلني)\s*(لي|لنا)?\s*(ب|في|علي|على|الى|الي)?\s*(الحساب|حساب|الايميل|الموقع|المنصه|المنصة)/,
   /(الحساب|الايميل|الاكونت)\s*(ده|دا|هذا|التجريبي)/,
