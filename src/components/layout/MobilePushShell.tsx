@@ -144,7 +144,12 @@ export default function MobilePushShell({
         dragElastic={isRtlUi ? { left: 0.03, right: 0.14 } : { left: 0.14, right: 0.03 }}
         dragMomentum={false}
         onDragEnd={handleDragEnd}
-        className="relative min-h-[100dvh] overflow-visible max-md:z-[2] max-md:bg-background md:!transform-none"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={() => {
+          touchRef.current = null;
+        }}
+        className="relative min-h-[100dvh] overflow-visible max-md:z-[2] max-md:overflow-x-clip max-md:overscroll-x-none max-md:bg-background md:!transform-none"
       >
         {children}
 
