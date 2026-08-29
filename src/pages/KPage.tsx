@@ -70,19 +70,35 @@ const KPage = () => {
     if (!value.trim()) return;
     setBusy(true);
     setNote("");
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth?.user) {
+      setBusy(false);
+      setNote("سجّل الدخول أولاً");
+      return;
+    }
+    const { data: isAdmin } = await (supabase as any).rpc("has_role", {
+      _user_id: auth.user.id,
+      _role: "admin",
+    });
+    if (!isAdmin) {
+      setBusy(false);
+      setNote("هذا الحساب ليس أدمن");
+      return;
+    }
     const { data, error } = await (supabase as any).rpc("store_provider_key", {
       p_provider: provider,
       p_value: value.trim(),
     });
     setBusy(false);
     if (error || !(data as { ok?: boolean } | null)?.ok) {
-      setNote("×");
+      setNote(error?.message ? `× ${error.message}` : "× لم يتم الحفظ");
       return;
     }
     reset();
     setNote("✓");
     refresh();
   };
+
 
   const line = (p: Provider) =>
     `${counts[`${p}_active`] ?? 0}/${(counts[`${p}_active`] ?? 0) + (counts[`${p}_blocked`] ?? 0)}`;
