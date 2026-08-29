@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { postJsonWithAuth } from "@/lib/net/apiRetry";
 import { KEEPALIVE_MS, type LongRun, type LongRunEvent } from "@/lib/longrun/types";
 
 async function call(action: string, body: Record<string, unknown> = {}) {
-  return postJsonWithAuth<{ run?: LongRun }>("/api/long-run", { action, ...body });
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("سجّل الدخول أولاً لتشغيل مهام الكمبيوتر");
+  const { data, error } = await supabase.functions.invoke<{ run?: LongRun }>("long-run", {
+    body: { action, ...body, token },
+  });
+  if (error) throw new Error("خدمة الكمبيوتر مش متاحة دلوقتي. جرّب تاني بعد لحظة.");
+  return data ?? {};
 }
 
 
