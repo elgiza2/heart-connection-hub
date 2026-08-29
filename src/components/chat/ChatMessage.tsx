@@ -1306,7 +1306,7 @@ const ChatMessage = ({
                       ref={mobileMenuRef}
                       role="menu"
                       dir="ltr"
-                      className="md:hidden liquid-glass-strong absolute right-0 z-50 min-w-[180px] rounded-ios-lg p-1.5 animate-in fade-in-0 zoom-in-95 duration-150"
+                      className="md:hidden absolute right-0 z-50 min-w-[190px] rounded-ios-lg p-1.5 bg-popover/95 text-popover-foreground border border-border shadow-[0_18px_44px_-16px_rgba(0,0,0,0.45)] backdrop-blur-2xl animate-in fade-in-0 zoom-in-95 duration-150"
                       style={{ bottom: "calc(100% + 8px)" }}
                       onClick={(e) => e.stopPropagation()}
                     >
