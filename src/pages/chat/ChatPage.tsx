@@ -1483,13 +1483,29 @@ const ChatPage = () => {
 
 
   const handleSendWithText = async (overrideText?: string) => {
+    try {
+      await handleSendWithTextInner(overrideText);
+    } catch (err) {
+      // Any unhandled failure must still release the composer.
+      isSubmittingRef.current = false;
+      console.error("[send] unhandled error", err);
+      toast.error("حصلت مشكلة أثناء الإرسال. جرّب تاني.");
+    }
+  };
+
+  const handleSendWithTextInner = async (overrideText?: string) => {
     const text = overrideText || input;
     const isLearningAnswer =
       chatMode === "learning" &&
       (text.trim().startsWith("[LEARN_ANSWER]") || text.trim().startsWith("[LEARN_CHOICE]"));
     const hasFrames = chatMode === "video" && videoStartEndMode && !!startFrameUrl && !!endFrameUrl;
     if (!text.trim() && attachedFiles.length === 0 && !hasFrames) return;
-    if (isLoading || isSubmittingRef.current) return;
+    if (isLoading) return;
+    if (isSubmittingRef.current) {
+      // Release locks older than a minute instead of blocking forever.
+      if (Date.now() - submitLockAtRef.current < 60_000) return;
+      isSubmittingRef.current = false;
+    }
     // Streak/achievement bookkeeping is telemetry, not part of the send path.
     // It used to be `await`ed here, which meant the user's own bubble could not
     // render until two lazy chunks finished downloading — the single biggest
