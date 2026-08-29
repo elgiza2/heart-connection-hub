@@ -1711,6 +1711,7 @@ const ChatPage = () => {
     }
 
     isSubmittingRef.current = true;
+    submitLockAtRef.current = Date.now();
 
     const pendingAttachments = attachedFiles.filter(
       (f) => f.data.startsWith("__parsing_") || f.data.startsWith("__uploading_"),
