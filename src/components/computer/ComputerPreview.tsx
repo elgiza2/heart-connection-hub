@@ -87,16 +87,16 @@ export function ComputerPreview({
   const finalText =
     summary ||
     rawOutput ||
-    (run?.status === "canceled" ? "تم إيقاف المهمة." : null);
+    (run?.status === "canceled" ? "Task stopped." : null);
 
   const lastStep = events.length ? events[events.length - 1] : null;
   const headline = active
-    ? run?.status_text || lastStep?.title || "بيشغّل الكمبيوتر…"
+    ? run?.status_text || lastStep?.title || "Starting the computer…"
     : run?.status === "error"
-      ? "المهمة توقفت"
+      ? "Task failed"
       : run?.status === "canceled"
-        ? "تم الإيقاف"
-        : "تم إكمال المهمة";
+        ? "Stopped"
+        : "Task completed";
 
   const traceLines: string[] = events.length
     ? events.map((e) => (e.detail ? `${e.title} — ${e.detail}` : e.title))
